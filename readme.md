@@ -1,16 +1,16 @@
-# Jordan Teaches Web Scraping - Save to CSV 101
+# Jordan Teaches Web Scraping - Puppeteer 101
 
-This repository goes over the basics of using saving data to CSVs.
+This repository goes over the basics of using Puppeteer in order to navigate through and scrape web sites.
 
 ## Getting Started
 
 Ensure that you have [NodeJS](https://nodejs.org/en/) installed.
 
-Clone or download the repository and run `npm install`. 
+Clone or download the repository and run `npm install`.
 
 Running `npm start` after this point
 
-[Full Guide Here](https://javascriptwebscrapingguy.com/save-to-csv-jordan-teaches-web-scraping)
+[Full Guide Here](https://javascriptwebscrapingguy.com/puppeteer-jordan-teaches-web-scraping)
 
 ### Prerequisites
 
@@ -29,6 +29,7 @@ npm i
 * [NodeJS](https://nodejs.org/en/) - NodeJS
 * [Cheerio](https://github.com/cheeriojs/cheerio) - Library to parse html
 * [json2csv](https://github.com/zemirco/json2csv) - Library to parse json into csv
+* [Puppeteer](https://github.com/puppeteer/puppeteer) - Library for browser automation
 
 ## Authors
 
@@ -38,4 +39,3 @@ npm i
 ## License
 
 This project is licensed under the ISC License
-

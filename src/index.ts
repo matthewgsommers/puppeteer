@@ -25,17 +25,17 @@ import cheerio from 'cheerio';
 
     console.log('top nav buttons', topNavButtons);
 
-    // // Search by property
+    // Search by property
     const pizzaNews = await page.$eval('a[href="/pizza-news"]', element => element.textContent);
 
     console.log('pizza news', pizzaNews);
 
-    // // Search by property and find only the last
+    // Search by property and find only the last
     const lastNavLink = await page.$$eval('li a', elements => elements[elements.length - 1].textContent);
 
     console.log('last  nav link', lastNavLink);
 
-    // // Get propery from element
+    // Get propery from element
     const funFactsLink = await page.$eval('.last a', element => element.getAttribute('href'));
 
     console.log('fun facts link', funFactsLink);
