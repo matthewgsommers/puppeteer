@@ -4,73 +4,63 @@ import puppeteer from 'puppeteer';
 import cheerio from 'cheerio';
 
 
+// Scrapes all content from the URL below.
+
 (async () => {
-    const browser = await puppeteer.launch({ headless: false });
-    const page = await browser.newPage();
-
-    await page.goto('http://pizza.com');
-
-    // Search by element
-    const title = await page.$eval('title', element => element.textContent);
-
-    console.log('title', title);
-
-    // Search by class
-    const homeButton = await page.$eval('.home_link', element => element.textContent);;
-
-    console.log('Home button', homeButton);
-
-    // Search by class and child
-    const topNavButtons = await page.$eval('.word-only li', element => element.textContent);
-
-    console.log('top nav buttons', topNavButtons);
-
-    // Search by property
-    const pizzaNews = await page.$eval('a[href="/pizza-news"]', element => element.textContent);
-
-    console.log('pizza news', pizzaNews);
-
-    // Search by property and find only the last
-    const lastNavLink = await page.$$eval('li a', elements => elements[elements.length - 1].textContent);
-
-    console.log('last  nav link', lastNavLink);
-
-    // Get propery from element
-    const funFactsLink = await page.$eval('.last a', element => element.getAttribute('href'));
-
-    console.log('fun facts link', funFactsLink);
-
-    // Get a list of all 'li a' text
-    const listElements: any[] = await page.evaluate(() => Array.from(document.querySelectorAll('li a'), element => element.textContent));
-
-    console.log('list elements', listElements);
-
-    const data = {
-        titleText: title,
-        homeButtonText: homeButton,
-        topNavButtonsText: topNavButtons,
-        pizzaNewsText: pizzaNews,
-        listElementsArray: listElements
-    };
-
-    const csv = json2csv.parse(data);
-
-    await page.click('a[href="/pizza-news"]');
-    // Wait for 3.5 seconds
-    await page.waitFor(3500);
-
-    // ...or just use cheerio
-    const bodyHtml = await page.evaluate(() => document.body.innerHTML);
-    const $ = cheerio.load(bodyHtml);
-    console.log('pizza news type-post', $('.type-post b').text());
-
-    fs.writeFile('data.csv', csv, (err) => {
-        if (err) {
-            return console.log('an error happened while saving the file', err);
-        }
-        console.log('file saved successfully!');
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: [
+            '--incognito',
+        ],
     });
+    let url = [
+        'https://www.theverge.com/2019/12/5/20995453/away-luggage-ceo-steph-korey-toxic-work-environment-travel-inclusion',
+        'https://www.theverge.com/2019/12/4/20994361/google-alphabet-larry-page-sergey-brin-sundar-pichai-co-founders-ceo-timeline'
+    ];
 
 
+    for (let i = 0; i < url.length; i++) {
+        let startOfWww = url[i].indexOf('www');
+        let endOfWww = startOfWww + 4;
+        let startOfDotCom = url[i].indexOf('.com');
+        let siteName = url[i].substring(endOfWww, startOfDotCom);
+
+        const page = await browser.newPage();
+
+        await page.goto(url[i]);
+
+        // Still need  to find the title, is working out-of-the-box
+        let rawTitle = await page.$eval('title', element => element.textContent);
+
+        let title = '';
+
+        if (rawTitle) {
+            title = rawTitle.toLowerCase().replace(/ /g,"_");
+        }
+
+        const bodyHtml = await page.evaluate(() => document.body.innerHTML);
+        const $ = cheerio.load(bodyHtml);
+
+        let textContainer = $('.c-entry-content').text();
+        let removeWhiteSpace = textContainer.replace(/^\s*[\r\n]/gm, "\r\n");
+
+        let data = siteName + "\r\n" + "\r\n" + title + "\r\n" + removeWhiteSpace;
+
+
+        // Check if a directory for the scrapped site already exists. If not, create it.
+        if (!fs.existsSync('./scrappedArticles/' + siteName)){
+            fs.mkdirSync('./scrappedArticles/' + siteName);
+        }
+
+        // Create file with title as name. Insert website name, article title, and article body
+        fs.writeFile("./scrappedArticles/" + siteName + "/" + title + '.txt', data, (err) => {
+            if (err) {
+                return console.log('an error happened while saving the file', err);
+            }
+            console.log('file saved successfully!');
+        });
+
+
+    }
     await browser.close();
 })();
