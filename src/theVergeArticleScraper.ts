@@ -1,49 +1,74 @@
-import * as json2csv from 'json2csv';
+// import * as json2csv from 'json2csv';
 import * as fs from 'fs';
 import puppeteer from 'puppeteer';
 import cheerio from 'cheerio';
 
-
-// Scrapes all content from the URL below.
-
 (async () => {
-    const browser = await puppeteer.launch({
-        headless: true,
+    let browser = await puppeteer.launch({
+        headless: false,
         args: [
             '--incognito',
         ],
     });
-    const page = await browser.newPage();
 
-    await page.goto('https://www.theverge.com/2019/12/5/20995453/away-luggage-ceo-steph-korey-toxic-work-environment-travel-inclusion');
+    let url = [
+        'https://www.theverge.com/2019/12/5/20995453/away-luggage-ceo-steph-korey-toxic-work-environment-travel-inclusion'
+    ];
 
-    // Still need  to find the title, is working out-of-the-box
-    const title = await page.$eval('title', element => element.textContent);
+    for (let i = 0; i < url.length; i++) {
+        // Get publisher's domain name
+        let endOfWww = url[i].indexOf('www') + 4;
+        let startOfDotCom = url[i].indexOf('.com');
+        let siteName = url[i].substring(endOfWww, startOfDotCom);
 
-    const bodyHtml = await page.evaluate(() => document.body.innerHTML);
-    const $ = cheerio.load(bodyHtml);
+        // Init. Puppeteer
+        let page = await browser.newPage();
+        await page.goto(url[i]);
+        // await page.evaluate( () => { debugger; } );
 
-    let textContainer = $('.c-entry-content').text();
-    let removeWhiteSpace = textContainer.replace(/^\s*[\r\n]/gm, "\r\n");
-
-    let data = {
-        titleValue: title,
-        body: removeWhiteSpace
-    }
-
-    // const data = {
-        //     titleText: title,
-        //     homeButtonText: homeButton,
-        //     topNavButtonsText: topNavButtons,
-        //     pizzaNewsText: pizzaNews,
-        //     listElementsArray: listElements
-        // };
-    fs.writeFile('data.txt', data, (err) => {
-        if (err) {
-            return console.log('an error happened while saving the file', err);
+        // Get Article title
+        let rawTitle = await page.$eval('title', element => element.textContent);
+        let title;
+        if (rawTitle) {
+            title = rawTitle.toLowerCase().replace(/ /g,"_");
         }
-        console.log('file saved successfully!');
-    });
 
+        // Get body HTML
+        let bodyHtml = await page.evaluate(() => document.body.innerHTML);
+
+        // Init cheerio
+        let $ = cheerio.load(bodyHtml);
+
+        // Target content container class
+        let textContainer = $('.c-entry-content').text();
+
+        // Replace multiple empty lines with a single empty line
+        let removeWhiteSpace = textContainer.replace(/^\s*[\r\n]/gm, "\r\n");
+
+        // Concat all relevant data points into one variable
+        let data = siteName + "\r\n" + "\r\n" + title + "\r\n" + removeWhiteSpace;
+
+        if (!fs.existsSync('./scrapedArticles')){
+            fs.mkdirSync('./scrapedArticles');
+        } else {
+            console.log('Scraped Articles Directory Exists Already');
+        }
+
+        // Check if a directory for the scrapped site already exists. If not, create it.
+        if (!fs.existsSync('./scrapedArticles/' + siteName)){
+            fs.mkdirSync('./scrapedArticles/' + siteName);
+        } else {
+            console.log(siteName + ' Directory Exists Already');
+        }
+
+        // Create file with title as name. Insert website name, article title, and article body
+        fs.writeFile("./scrapedArticles/" + siteName + "/" + title + '.txt', data, (err) => {
+            if (err) {
+                return console.log('an error happened while saving the file', err);
+            }
+            console.log('file saved successfully!' + "\r\n");
+            console.log(data);
+        });
+    }
     await browser.close();
 })();

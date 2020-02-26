@@ -96,10 +96,6 @@ import cheerio from 'cheerio';
     console.log(removeWhiteSpace);
 
 
-
-
-
-
     // WORKING
     // console.log('2nd try', $('.blog-post__text p').text());
 

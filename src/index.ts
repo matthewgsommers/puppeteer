@@ -3,64 +3,88 @@ import * as fs from 'fs';
 import puppeteer from 'puppeteer';
 import cheerio from 'cheerio';
 
-
-// Scrapes all content from the URL below.
-
 (async () => {
-    const browser = await puppeteer.launch({
+
+
+    let browser = await puppeteer.launch({
         headless: true,
         args: [
             '--incognito',
         ],
     });
+
+    let getName = function(urlArray) {
+        for (let i = 0; i < urlArray.length; i++) {
+        console.log("Targeting" + urlArray[0]);
+        let endOfWww = urlArray[i].indexOf('www') + 4;
+        let startOfDotCom = urlArray[i].indexOf('.com');
+        let siteName = urlArray[i].substring(endOfWww, startOfDotCom);
+        console.log("Site name is: " + siteName);
+    }
+
+
+
+
     let url = [
-        'https://www.theverge.com/2019/12/5/20995453/away-luggage-ceo-steph-korey-toxic-work-environment-travel-inclusion',
-        'https://www.theverge.com/2019/12/4/20994361/google-alphabet-larry-page-sergey-brin-sundar-pichai-co-founders-ceo-timeline'
+        'https://www.economist.com/leaders/2020/02/20/how-to-make-sense-of-the-latest-tech-surge'
     ];
 
-
     for (let i = 0; i < url.length; i++) {
-        let startOfWww = url[i].indexOf('www');
-        let endOfWww = startOfWww + 4;
-        let startOfDotCom = url[i].indexOf('.com');
-        let siteName = url[i].substring(endOfWww, startOfDotCom);
+        const context = await browser.createIncognitoBrowserContext();
+        // implement try/catch pattern
+        // Get publisher's domain name
 
-        const page = await browser.newPage();
 
-        await page.goto(url[i]);
+        // Init. Puppeteer
+        let page = await context.newPage();
+        await page.goto(url[i], { waitUntil: 'domcontentloaded' });
+        await page.evaluate( () => { debugger; } );
 
-        // Still need  to find the title, is working out-of-the-box
+        // Get Article title
         let rawTitle = await page.$eval('title', element => element.textContent);
-
-        let title = '';
-
+        let title;
         if (rawTitle) {
             title = rawTitle.toLowerCase().replace(/ /g,"_");
         }
 
-        const bodyHtml = await page.evaluate(() => document.body.innerHTML);
-        const $ = cheerio.load(bodyHtml);
+        // Get body HTML
+        let bodyHtml = await page.evaluate(() => document.body.innerHTML);
 
-        let textContainer = $('.c-entry-content').text();
-        let removeWhiteSpace = textContainer.replace(/^\s*[\r\n]/gm, "\r\n");
+        // Init cheerio
+        let $ = cheerio.load(bodyHtml);
 
-        let data = siteName + "\r\n" + "\r\n" + title + "\r\n" + removeWhiteSpace;
+        // Target content container class
+        let rawArticleBody = $('.blog-post__text p').text();
 
+        // let formattedArticleBody = rawArticleBody.replace(/^\s*[\r\n]/gm, "\r\n");
+        let formattedArticleBody = rawArticleBody.replace(/^\s*[\r\n]/gm, "\r\n");
+        console.log(formattedArticleBody);
+        // /(.{80})/g
+
+
+        // Concat all relevant data points into one variable
+        let data = siteName + "\r\n" + "\r\n" + title + "\r\n" + formattedArticleBody;
+
+        if (!fs.existsSync('./scrapedArticles')){
+            fs.mkdirSync('./scrapedArticles');
+        } else {
+            console.log('Scraped Articles Directory Exists Already');
+        }
 
         // Check if a directory for the scrapped site already exists. If not, create it.
-        if (!fs.existsSync('./scrappedArticles/' + siteName)){
-            fs.mkdirSync('./scrappedArticles/' + siteName);
+        if (!fs.existsSync('./scrapedArticles/' + siteName)){
+            fs.mkdirSync('./scrapedArticles/' + siteName);
+        } else {
+            console.log(siteName + ' Directory Exists Already');
         }
 
         // Create file with title as name. Insert website name, article title, and article body
-        fs.writeFile("./scrappedArticles/" + siteName + "/" + title + '.txt', data, (err) => {
+        fs.writeFile("./scrapedArticles/" + siteName + "/" + title + '.txt', data, (err) => {
             if (err) {
                 return console.log('an error happened while saving the file', err);
             }
-            console.log('file saved successfully!');
+            console.log('file saved successfully!' + "\r\n");
         });
-
-
     }
     await browser.close();
 })();
