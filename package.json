@@ -25,6 +25,8 @@
     "homepage": "https://github.com/aarmora/puppeteer-jordan-teaches-web-scraping",
     "dependencies": {
         "cheerio": "^1.0.0-rc.3",
+        "gmail-send": "^1.8.10",
+        "jquery": "^3.4.1",
         "json2csv": "^4.5.4",
         "puppeteer": "^2.0.0"
     },

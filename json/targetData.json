@@ -1,0 +1,14 @@
+{
+    "publishers": {
+        "economist": {
+            "url": "economist",
+            "articleElement": ".article__body-text",
+            "regexPattern": "/^\\s*[\\r\\n]/gm, \"\\r\\n\"/^\\s*[\\r\\n]/gm, \"\\r\\n\""
+        },
+        "theverge": {
+            "url": "theverge",
+            "articleElement": ".c-entry-content",
+            "regexPattern": "/^\\s*[\\r\\n]/gm, \"\\r\\n\""
+        }
+    }
+}
